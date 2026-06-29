@@ -1,0 +1,137 @@
+import {Button, VerticalBox, CheckBox, HorizontalBox, ListView, ScrollView, TextEdit, LineEdit} from "std-widgets.slint";
+struct TodoItem { //структура данных для задачи
+    id: int,
+    text: string, //текст задачи
+    checked: bool, //статус выполнения задачи
+    color: color, //цвет задачи
+}
+
+component TodoTask {
+    in property <string> text;
+    in property <bool> checked;
+    in property <color> color;
+    callback toggled(bool);
+    height: 52px;
+    
+    Rectangle {
+        width: parent.width; //задаёт ширину равную ширине родительского элемента
+        height: 52px; //задаёт высоту
+        border-width: 1px; //задаёт ширину рамки
+        border-color: root.color; //задаёт цвет рамки
+        border-radius: self.height / 2; //задаёт радиус скругления углов
+        background: @linear-gradient(180deg, root.color, root.color.darker(0.3)); //задаёт градиент фона
+        drop-shadow-blur: 12px; //задаёт размытие тени
+        drop-shadow-color: #00000020; //задаёт цвет тени
+        // drop-shadow-offset-x: 2px; //задаёт смещение тени по оси X
+        // drop-shadow-offset-y: 2px; //задаёт смещение тени по оси Y
+        HorizontalLayout {
+            alignment: stretch; //задаёт растяжение до заполнения родительского элемента
+            padding-left: 20px; //задаёт внутренний отступ слева
+            padding-right: 20px; //задаёт внутренний отступ справа
+            spacing: 12px; //задаёт расстояние между элементами
+    
+            Text {
+                text: root.text;
+                font-size: 16px; //задаёт размер шрифта
+                color: #ffffff; //задаёт цвет текста
+                vertical-alignment: center; //задаёт вертикальное выравнивание
+                overflow: elide; //задаёт обрезку текста
+                horizontal-stretch: 1; //задаёт растяжение до заполнения родительского элемента
+            }
+    
+            CheckBox {
+                checked: root.checked; //задаёт начальное состояние чекбокса
+                toggled => { root.toggled(self.checked); } //задаёт обработчик события переключения
+            }
+        }
+        
+    }
+}
+
+component AddTask {
+    in property <string> text; //задаёт текст для ввода новой задачи    
+    in property <color> color; //задаёт цвет фона
+    callback add_task(string); //задаёт обработчик события добавления задачи
+    callback update(); //задаёт обработчик события обновления
+    Rectangle {
+        width: parent.width;
+        height: 72px;
+        border-width: 1px;
+        border-color: #ffffff35;
+        border-radius: 26px;
+        background: #ffffff20;
+        drop-shadow-blur: 12px;
+        drop-shadow-color: #00000020;
+        HorizontalBox {
+            spacing: 5px; //задаёт расстояние между элементами
+            padding: 10px; //задаёт отступы внутри элемента
+            alignment: stretch; //задаёт растяжение до заполнения родительского элемента
+            line_edit := LineEdit { //элемент для ввода текста
+                width: 350px;
+                height: 50px;
+                
+                placeholder-text: "новая задача";
+                font-size: 14px;
+                horizontal-alignment: center; //выравнивание по горизонтали
+            }
+            btn_add := Button { //кнопка для добавления задачи
+                width: 100px;
+                height: 50px;
+                text: "Создать";
+                clicked => {  //вызывается при нажатии на кнопку
+                    root.add_task(line_edit.text); //испускает событие добавления задачи для родительского элемента
+                    line_edit.text = ""; //очищает поле ввода
+                    line_edit.clear-focus(); //убирает фокус с поля ввода
+                }
+            }
+            btn_update := Button {
+                width: 150px;
+                height: 50px;
+                text: "Очистить";                
+                clicked => {  //вызывается при нажатии на кнопку
+                    root.update();  //испускает событие обновления для родительского элемента
+                }
+            }
+        }
+    }
+}
+
+
+export component MainUI inherits Window {
+    width: 640px;
+    height: 420px;
+    private property <color> bg_grad_start: #0ea5e9;
+    private property <color> bg_grad_end: #2563eb;
+    background: @linear-gradient(135deg, root.bg_grad_start 0%, root.bg_grad_end 100%); // цвет фона окна
+    title: "Todo List"; // заголовок окна
+    in-out property <[TodoItem]> tasks; // св-во массива задач типа TodoItem
+    callback task_toggled(int, bool); // вызывается при изменении состояния задачи
+    callback add_task_m(string); // вызывается при добавлении новой задачи
+    callback update_m(); // вызывается при обновлении списка задач
+    VerticalLayout {
+        spacing: 5px;
+        padding: 5px;
+        ScrollView {
+            VerticalBox {
+                spacing: 5px;
+                padding: 5px;
+                for task[i] in tasks : TodoTask {
+                    text: task.text;
+                    checked: task.checked;
+                    color: task.checked ? #f59e0b :#ffffff35;
+                    toggled(is_checked) => {  // вызывается при изменении состояния задачи
+                        task_toggled(i, is_checked); // испускает событие во внешний код на Rust
+                    }
+                }
+            }
+        }
+        AddTask {
+            add_task(text) => { // вызывается при добавлении новой задачи
+                root.add_task_m(text); // испускает событие добавления задачи во внешний код на Rust
+            }
+            update() => { 
+                root.update_m(); // испускает событие обновления списка задач во внешний код на Rust
+            }
+        }
+    }
+}
