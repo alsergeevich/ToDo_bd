@@ -1,4 +1,5 @@
 import {Button, VerticalBox, CheckBox, HorizontalBox, ListView, ScrollView, TextEdit, LineEdit} from "std-widgets.slint";
+import {CustomButton} from "button.slint";
 struct TodoItem { //структура данных для задачи
     id: int,
     text: string, //текст задачи
@@ -14,12 +15,16 @@ component TodoTask {
     height: 52px;
     
     Rectangle {
+        private property <color> bg_grad_start: root.color; //задаёт начальный цвет градиента
+        private property <color> bg_grad_end: root.color.darker(0.4); //задаёт конечный цвет градиента
         width: parent.width; //задаёт ширину равную ширине родительского элемента
         height: 52px; //задаёт высоту
         border-width: 1px; //задаёт ширину рамки
         border-color: root.color; //задаёт цвет рамки
         border-radius: self.height / 2; //задаёт радиус скругления углов
-        background: @linear-gradient(180deg, root.color, root.color.darker(0.3)); //задаёт градиент фона
+        background: @linear-gradient(135deg, bg_grad_start, bg_grad_end); //задаёт градиент фона
+        animate bg_grad_start { duration: 800ms; easing: ease-in-out; } //задаёт анимацию изменения цвета градиента
+        animate bg_grad_end { duration: 800ms; easing: ease-in-out; } //задаёт анимацию изменения цвета градиента
         drop-shadow-blur: 12px; //задаёт размытие тени
         drop-shadow-color: #00000020; //задаёт цвет тени
         // drop-shadow-offset-x: 2px; //задаёт смещение тени по оси X
@@ -74,9 +79,17 @@ component AddTask {
                 font-size: 14px;
                 horizontal-alignment: center; //выравнивание по горизонтали
             }
-            btn_add := Button { //кнопка для добавления задачи
+            btn_add := CustomButton { //кнопка для добавления задачи
                 width: 100px;
                 height: 50px;
+                background-color: #ffffff20;
+                fontSize: 18px;
+                fontWeight: 100;
+                hover-color: self.background-color.darker(0.2);
+                active-color: self.background-color.darker(0.2);
+                border-width: 1px;
+                border-color: #ffffff35;
+                border-radius: self.height / 2; //задаёт радиус скругления углов
                 text: "Создать";
                 clicked => {  //вызывается при нажатии на кнопку
                     root.add_task(line_edit.text); //испускает событие добавления задачи для родительского элемента
@@ -84,9 +97,17 @@ component AddTask {
                     line_edit.clear-focus(); //убирает фокус с поля ввода
                 }
             }
-            btn_update := Button {
+            btn_update := CustomButton {
                 width: 150px;
                 height: 50px;
+                fontSize: 18px;
+                fontWeight: 100;
+                background-color: #ffffff20;
+                hover-color: self.background-color.darker(0.2);
+                active-color: self.background-color.darker(0.2);
+                border-width: 1px;
+                border-color: #ffffff35;
+                border-radius: self.height / 2; //задаёт радиус скругления углов
                 text: "Очистить";                
                 clicked => {  //вызывается при нажатии на кнопку
                     root.update();  //испускает событие обновления для родительского элемента

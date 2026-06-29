@@ -1,0 +1,65 @@
+export component CustomButton inherits Rectangle {
+    // 1. Свойства для настройки (входящие-исходящие)
+    in-out property <string> text: "Classic Blue";
+    in-out property <color> background-color: #3b82f6;
+    in-out property <color> hover-color: #2563eb;
+    in-out property <color> active-color: #1d4ed8;
+    in-out property <color> text-color: #ffffff;
+    in-out property <length> fontSize: 14px;
+    // Новые свойства для кастомизации границы и контура
+    in-out property <color> bordercolor: #1d4ed8;
+    in-out property <length> borderwidth: 0px;
+    in-out property <int> fontWeight: 700;
+    // 2. Сигнал (Callback) срабатывающий при клике
+    callback clicked;
+
+    // 3. Базовая геометрия и стиль фонового Rectangle
+    height: 48px;
+    min-width: 160px;
+    border-radius: 12px;
+    
+    // Динамический расчет цвета в зависимости от состояния мыши
+    background: touch-area.pressed ? active-color : (touch-area.has-hover ? hover-color : background-color); // задаёт цвет фона в зависимости от состояния мыши (нажатие, наведение, обычное состояние)
+    
+    // Вычисляемые параметры для эффекта "оживления" (наведения)
+    property <length> scale-offset: touch-area.pressed ? 0px : (touch-area.has-hover ? 4px : 0px); // задаёт смещение масштаба для эффекта "оживления"
+    property <length> lift-offset: touch-area.pressed ? 2px : (touch-area.has-hover ? -3px : 0px); // задаёт смещение подъема для эффекта "оживления"
+    
+    // 4. Декларативная анимация интерполяции переходов
+    animate background, scale-offset, lift-offset {
+        duration: 150ms;
+        easing: ease-out;
+    }
+
+    // Внутренний контейнер, реагирующий на геометрическое расширение и подъем
+    Rectangle {
+        y: parent.lift-offset;
+        width: parent.width + parent.scale-offset;
+        height: parent.height + parent.scale-offset;
+        border-radius: parent.border-radius;
+        border-color: parent.bordercolor;
+        border-width: parent.borderwidth;
+        background: parent.background;
+        
+        // Плавная анимация геометрического растяжения
+        animate width, height, y {
+            duration: 150ms;
+            easing: ease-out;
+        }
+
+        // Текстовый лейбл внутри кнопки
+        Text {
+            text: root.text;
+            color: root.text-color;
+            font-size: root.fontSize;
+            font-weight: root.fontWeight;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+        }
+    }
+
+    // 5. Область перехвата ввода
+    touch-area := TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
